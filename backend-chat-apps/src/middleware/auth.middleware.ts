@@ -1,7 +1,6 @@
+// middlewares/auth.middleware.ts
 import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET || "supersecret"; // simpan di .env
+import { verifyToken } from "../helpers/generate.jwt";
 
 export interface AuthRequest extends Request {
   user?: any;
@@ -12,17 +11,35 @@ export const authMiddleware = async (
   res: Response,
   next: NextFunction
 ) => {
-  const authHeader = req.headers["authorization"];
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-  const token = authHeader.split(" ")[1];
-
   try {
-    const decodedToken: any = jwt.verify(token, JWT_SECRET);
-    req.user = decodedToken.user;
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader?.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: No token provided" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded: any = await verifyToken(token);
+
+    if (!decoded || !decoded.user) {
+      return res.status(401).json({ message: "Unauthorized: Invalid token" });
+    }
+
+    // Simpan user ke request biar bisa dipakai di controller
+    req.user = {
+      id: decoded.user.id,
+      email: decoded.user.email,
+      username: decoded.user.username,
+      role: decoded.user.role,
+    };
+
     next();
-  } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
+  } catch (error: any) {
+    return res.status(401).json({
+      message: "Unauthorized: Token verification failed",
+      error: process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 };
