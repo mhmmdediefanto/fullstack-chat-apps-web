@@ -1,5 +1,6 @@
 import express, { Application } from "express";
 import AuthRoute from "./routes/AuthRoutes";
+import ContactRoute from "./routes/ContactRoutes";
 import cookieParser from "cookie-parser";
 
 const app: Application = express();
@@ -11,5 +12,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Routes
 app.use("/api/v1/auth", AuthRoute);
+app.use("/api/v1/contact", ContactRoute);
 
 export default app;
