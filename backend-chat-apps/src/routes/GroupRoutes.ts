@@ -9,5 +9,6 @@ router.get("/my-groups", authMiddleware, GroupController.listMyGroupsController)
 router.post("/add-member", authMiddleware, GroupController.addMemberController);
 router.post("/send-message-group", authMiddleware, GroupController.sendMessageGroupController);
 router.get("/:slugGroup/messages", authMiddleware, GroupController.getMessagesGroupController);
+router.put("/update-member-to-admin", authMiddleware, GroupController.updateMemberToAdminController);
 
 export default router;

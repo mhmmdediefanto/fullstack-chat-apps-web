@@ -54,11 +54,11 @@ class GroupController {
 
   async listMyGroupsController(req: any, res: any) {
     try {
-      const createdBy = req.user.id; // didapat dari authMiddleware
-      if (!createdBy) {
+      const userId = req.user.id; // didapat dari authMiddleware
+      if (!userId) {
         return res.status(400).json({ message: "Unauthorized" });
       }
-      const result = await GroupService.listMyGroups({ createdBy });
+      const result = await GroupService.listMyGroups({ userId });
       return res.status(200).json({ message: "Success", data: result });
     } catch (error) {
       return res
@@ -176,6 +176,53 @@ class GroupController {
       return res.status(200).json({ message: "Success", data: resulData });
     } catch (error) {
       console.log(error);
+    }
+  }
+
+  // update member to admin group
+  async updateMemberToAdminController(req: any, res: any) {
+    try {
+      const authId = req.user?.id;
+      if (!authId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      // Validasi input
+      const parsed = addMemberSchema.safeParse({
+        userId: req.body.userId,
+        groupId: req.body.groupId,
+      });
+
+      if (!parsed.success) {
+        const errors = parsed.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        }));
+        return res.status(400).json({ message: "Validation failed", errors });
+      }
+
+      const { userId, groupId } = parsed.data;
+
+      const result = await GroupService.updateMemberToAdmin({
+        userId,
+        groupId,
+        createdBy: authId,
+      });
+
+      return res.status(200).json({ message: "Success", data: result });
+    } catch (error: any) {
+      const errorMap: Record<string, number> = {
+        "Group tidak ditemukan": 404,
+        "Anda bukan member dari group ini": 422,
+        "Hanya admin yang dapat update member": 422,
+        "Anda tidak dapat update diri sendiri": 422,
+        "User tersebut sudah menjadi admin": 422,
+      };
+
+      const statusCode = errorMap[error.message] || 500;
+      return res.status(statusCode).json({
+        message: error.message || "Internal server error",
+      });
     }
   }
 }

@@ -66,14 +66,10 @@ export async function findGroupBySlugAndCreatedBy(
 }
 
 // find group by createUser
-export async function findGroupByCreateUser({
-  createdBy,
-}: {
-  createdBy: number;
-}) {
+export async function findListGroup({ userId }: { userId: number }) {
   return prisma.conversation.findMany({
     where: {
-      createdBy: createdBy,
+      participants: { some: { userId: userId } },
       type: "GROUP",
     },
     include: {
@@ -84,9 +80,17 @@ export async function findGroupByCreateUser({
           fullname: true,
         },
       },
-      participants: {
-        select: {
-          role: true,
+      messages: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        include: {
+          sender: {
+            select: {
+              id: true,
+              username: true,
+              fullname: true,
+            },
+          },
         },
       },
     },
@@ -156,5 +160,19 @@ export async function getGroupMessages({ idGroup }: { idGroup: number }) {
       createdAt: "asc",
     },
   });
-  return message
+  return message;
+}
+
+// update user member to admin
+export async function updateMemberToAdmin({
+  userId,
+  groupId,
+}: {
+  userId: number;
+  groupId: number;
+}) {
+  return prisma.conversationParticipant.updateMany({
+    where: { conversationId: groupId, userId: userId },
+    data: { role: "ADMIN" },
+  });
 }
