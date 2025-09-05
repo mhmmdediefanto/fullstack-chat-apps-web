@@ -3,7 +3,9 @@ import {
   addFriend,
   deleteFriend,
   getByUserIdAndContactId,
+  getRequestFriends,
   getFriends,
+  updateFriendStatus,
 } from "../repository/contact.repository";
 
 export class ContactService {
@@ -26,7 +28,7 @@ export class ContactService {
     }
 
     // Logic to add a friend
-    const addContact = await addFriend(userId, friendId);
+    const addContact = await addFriend(userId, friendId, "PENDING");
 
     if (!addContact) {
       throw new Error("Failed to add friend");
@@ -45,12 +47,45 @@ export class ContactService {
   }
 
   async getFriendsAll(userId: number) {
-    const friends = await getFriends(userId);
+    const friends = await getFriends(userId, "ACCEPTED");
 
     if (!friends || friends.length === 0) {
       return [];
     }
 
+    console.log(JSON.stringify(friends, null, 2));
+
     return friends.map((friend) => friend.contact);
+  }
+
+  async getRequestFriendsAll(userId: number) {
+    const followers = await getRequestFriends(userId);
+    return followers;
+  }
+
+  async acceptFriend(userId: number, friendId: number) {
+    const contact = await getByUserIdAndContactId(friendId, userId);
+    if (!contact || contact.status !== "PENDING") {
+      throw new Error("Friend request not found");
+    }
+
+    // update status di sisi user yang mengirim permintaan pertemanan
+    const result = await updateFriendStatus({
+      userId: friendId,
+      contactId: userId,
+      status: "ACCEPTED",
+    });
+    if (result.count === 0) {
+      throw new Error("Failed to accept friend request");
+    }
+    // tambahkan friend status accepted
+    const create = await addFriend(userId, friendId, "ACCEPTED");
+    if (!create) {
+      throw new Error("Failed to accept friend request");
+    }
+
+    return {
+      message: `Friend request from ID ${friendId} accepted by user ${userId}`,
+    };
   }
 }

@@ -94,10 +94,23 @@ const listPrivateMessagesConversation = async (userId: number) => {
   return conversationMessages;
 };
 
+const messagesPrivate = async (conversationId: number) => {
+  const messages = await prisma.message.findMany({
+    where: {
+      conversationId: conversationId,
+    },
+    include: {
+      sender: { select: { id: true, username: true, fullname: true } },
+    },
+  });
+  return messages;
+};
+
 export {
   saveMessagePrivate,
   conversationExistsPrivate,
   createConversationPrivate,
   getConversationIdPrivate,
   listPrivateMessagesConversation,
+  messagesPrivate,
 };

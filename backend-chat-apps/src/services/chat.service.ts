@@ -1,12 +1,12 @@
-import { json } from "zod";
 import {
   conversationExistsPrivate,
   createConversationPrivate,
   saveMessagePrivate,
   getConversationIdPrivate,
   listPrivateMessagesConversation,
+  messagesPrivate,
 } from "../repository/chat.repository";
-import { getFriends } from "../repository/contact.repository";
+import { getFriends, isMutualFriend } from "../repository/contact.repository";
 
 export default class ChatService {
   public static async sendPrivateMessage(
@@ -22,6 +22,11 @@ export default class ChatService {
 
     if (!isFriend) {
       throw new Error("Anda hanya bisa mengirim pesan ke teman Anda");
+    }
+
+    const mutualFriend = await isMutualFriend(senderId, recipientId);
+    if (!mutualFriend) {
+      throw new Error("Teman harus saling mengikuti untuk mengirim pesan");
     }
 
     // Cek apakah sudah ada conversation antara senderId dan recipientId
@@ -55,29 +60,76 @@ export default class ChatService {
   }
 
   public static async listPrivateMessages({ userId }: { userId: number }) {
-    // list semua pesan private conversation
     const conversation = await listPrivateMessagesConversation(userId);
 
-    const data = conversation.map((convo) => ({
-      id: convo.id,
-      participants: convo.participants.map((p) => ({
-        id: p.user.id,
-        username: p.user.username,
-        fullname: p.user.fullname,
-      })),
-      lastMessage: convo.messages[0]
-        ? {
-            content: convo.messages[0].content,
-            sender: convo.messages[0].sender.username,
-            penerima: convo.participants
-              .filter((p) => p.user.id !== convo.messages[0]?.senderId)
-              .map((p) => p.user.username)
-              .join(", "),
-            createdAt: convo.messages[0].createdAt,
-          }
-        : null,
+    const result = conversation.map((conv) => {
+      const lastMessage = conv.messages[0];
+      const friend = conv.participants.find((p) => p.userId !== userId)?.user;
+      return {
+        conversationId: conv.id,
+        friend: friend
+          ? {
+              id: friend.id,
+              username: friend.username,
+              fullname: friend.fullname,
+            }
+          : null,
+        lastMessage: lastMessage
+          ? {
+              id: lastMessage.id,
+              content: lastMessage.content,
+              sender: lastMessage.sender.username ?? "Unknown",
+            }
+          : null,
+      };
+    });
+
+    return result;
+  }
+
+  public static async getPrivateMessages({
+    userId,
+    friendUsername,
+  }: {
+    userId: number;
+    friendUsername: string;
+  }) {
+    // pastikan friendUsername adalah teman dari userId
+    const userFriends = await getFriends(userId);
+    const friend = userFriends.find(
+      (friend) => friend.contact.username === friendUsername
+    );
+    if (!friend) {
+      throw new Error("Anda hanya bisa melihat pesan dari teman Anda");
+    }
+
+    // conversationid antara userId dan friend.id
+    const conversationId = await getConversationIdPrivate(
+      userId,
+      friend.contactId
+    );
+    if (!conversationId) {
+      return []; // jika tidak ada conversation, return array kosong
+    }
+
+    // ambil semua pesan dari conversationId
+    const resultMessages = await messagesPrivate(conversationId);
+    const result = resultMessages.map((msg) => ({
+      id: msg.id,
+      content: msg.content,
+      createdAt: msg.createdAt,
+      sender: {
+        id: msg.sender.id,
+        username: msg.sender.username,
+        fullname: msg.sender.fullname,
+      },
+      isMine: msg.senderId === userId,
     }));
 
-    return data;
+    if (result.length === 0) {
+      return [];
+    }
+
+    return result;
   }
 }

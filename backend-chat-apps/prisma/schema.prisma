@@ -30,10 +30,11 @@ model User {
 }
 
 model Contact {
-  id        Int      @id @default(autoincrement())
+  id        Int           @id @default(autoincrement())
   userId    Int
   contactId Int
-  createdAt DateTime @default(now())
+  status    ContactStatus @default(PENDING) // PENDING, ACCEPTED
+  createdAt DateTime      @default(now())
 
   user    User @relation("UserContacts", fields: [userId], references: [id])
   contact User @relation("ContactUsers", fields: [contactId], references: [id])
@@ -73,4 +74,9 @@ model Message {
 enum ConversationType {
   PRIVATE
   GROUP
+}
+
+enum ContactStatus {
+  PENDING
+  ACCEPTED
 }

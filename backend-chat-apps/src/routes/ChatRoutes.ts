@@ -16,4 +16,6 @@ router.get(
   ChatController.listPrivateMessagesController
 );
 
+router.get("/messages-private/:username", authMiddleware, ChatController.getPrivateMessagesController);
+
 export default router;
