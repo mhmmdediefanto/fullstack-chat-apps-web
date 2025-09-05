@@ -76,13 +76,6 @@ class ChatController {
         .json({ message: error.message || "Internal server error" });
     }
   }
-
-  async createGroupController(req: any, res: any) {
-    try {
-    } catch (error) {
-      return res.status(500).json({ message: "Internal server error" });
-    }
-  }
 }
 
 export default new ChatController();
