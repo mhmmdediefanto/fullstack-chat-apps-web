@@ -14,6 +14,7 @@ export async function addFriend(
   });
 }
 
+// mengupdate status teman (contact) dari user
 export async function updateFriendStatus({
   userId,
   contactId,
@@ -34,6 +35,7 @@ export async function updateFriendStatus({
   });
 }
 
+// mengambil data contact berdasarkan userId dan contactId
 export async function getByUserIdAndContactId(
   userId: number,
   contactId: number
@@ -46,6 +48,8 @@ export async function getByUserIdAndContactId(
   });
 }
 
+
+// menghapus teman (contact) dari user
 export async function deleteFriend(userId: number, friendId: number) {
   return await prisma.contact.deleteMany({
     where: {
@@ -55,6 +59,7 @@ export async function deleteFriend(userId: number, friendId: number) {
   });
 }
 
+// mengambil list teman (contact) dari user
 export async function getFriends(userId: number, status: "PENDING" | "ACCEPTED" = "ACCEPTED") {
   return await prisma.contact.findMany({
     where: {
@@ -67,6 +72,7 @@ export async function getFriends(userId: number, status: "PENDING" | "ACCEPTED" 
   });
 }
 
+// mengambil list request teman yang masuk
 export async function getRequestFriends(userId: number) {
   return await prisma.contact.findMany({
     where: {
@@ -79,6 +85,7 @@ export async function getRequestFriends(userId: number) {
   });
 }
 
+// cek apakah dua user adalah teman (mutual friend)
 export async function isMutualFriend(userId: number, friendId: number) {
   const following = await prisma.contact.findFirst({
     where: { userId, contactId: friendId },

@@ -23,10 +23,11 @@ model User {
   createdAt     DateTime @default(now())
 
   // relasi
-  conversations ConversationParticipant[]
-  messages      Message[]
-  contacts      Contact[]                 @relation("UserContacts")
-  contactOf     Contact[]                 @relation("ContactUsers")
+  conversations            ConversationParticipant[]
+  messages                 Message[]
+  contacts                 Contact[]                 @relation("UserContacts")
+  contactOf                Contact[]                 @relation("ContactUsers")
+  coversationsCreatedGroup Conversation[]            @relation("creatorGroup")
 }
 
 model Contact {
@@ -41,13 +42,16 @@ model Contact {
 }
 
 model Conversation {
-  id        Int              @id @default(autoincrement())
-  type      ConversationType // PRIVATE atau GROUP
-  name      String? // untuk group saja
-  createdAt DateTime         @default(now())
+  id         Int              @id @default(autoincrement())
+  type       ConversationType // PRIVATE atau GROUP
+  name       String? // untuk group saja
+  slug_group String?          @unique // untuk group saja, identifier unik
+  createdBy  Int? // user yang membuat percakapan (untuk group)
+  createdAt  DateTime         @default(now())
 
   participants ConversationParticipant[]
   messages     Message[]
+  creator      User?                      @relation("creatorGroup", fields: [createdBy], references: [id])
 }
 
 model ConversationParticipant {

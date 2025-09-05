@@ -47,8 +47,8 @@ class ChatController {
       if (!userId) {
         return res.status(400).json({ message: "Unauthorized" });
       }
-      
-      const result = await ChatService.listPrivateMessages({userId});
+
+      const result = await ChatService.listPrivateMessages({ userId });
       return res.status(200).json({ message: "Success", data: result });
     } catch (error: any) {
       return res
@@ -65,12 +65,22 @@ class ChatController {
       }
       const userId = req.user.id; // didapat dari authMiddleware
 
-      const result = await ChatService.getPrivateMessages({ userId, friendUsername });
+      const result = await ChatService.getPrivateMessages({
+        userId,
+        friendUsername,
+      });
       return res.status(200).json({ message: "Success", data: result });
     } catch (error: any) {
       return res
         .status(500)
         .json({ message: error.message || "Internal server error" });
+    }
+  }
+
+  async createGroupController(req: any, res: any) {
+    try {
+    } catch (error) {
+      return res.status(500).json({ message: "Internal server error" });
     }
   }
 }

@@ -17,5 +17,6 @@ router.get(
 );
 
 router.get("/messages-private/:username", authMiddleware, ChatController.getPrivateMessagesController);
+router.post("/create-group", authMiddleware, ChatController.createGroupController);
 
 export default router;

@@ -1,5 +1,6 @@
 import prisma from "../plugins/db";
 
+// fungsi untuk menyimpan pesan private
 const saveMessagePrivate = async (
   senderId: number,
   message: string,
@@ -19,6 +20,7 @@ const saveMessagePrivate = async (
   return savedMessage;
 };
 
+// cek apakah conversation private antara dua user sudah ada
 const conversationExistsPrivate = async (
   userId1: number,
   userId2: number
@@ -39,6 +41,7 @@ const conversationExistsPrivate = async (
   return !!conversation;
 };
 
+// fungsi untuk membuat conversation private antara dua user
 const createConversationPrivate = async (userId1: number, userId2: number) => {
   const conversation = await prisma.conversation.create({
     data: {
@@ -51,6 +54,7 @@ const createConversationPrivate = async (userId1: number, userId2: number) => {
   return conversation;
 };
 
+// fungsi untuk mendapatkan conversationId dari dua user yang sudah pasti ada conversationnya
 const getConversationIdPrivate = async (userId1: number, userId2: number) => {
   const conversation = await prisma.conversation.findFirst({
     where: {
@@ -94,6 +98,7 @@ const listPrivateMessagesConversation = async (userId: number) => {
   return conversationMessages;
 };
 
+// ambil semua pesan di conversation dengan id tertentu
 const messagesPrivate = async (conversationId: number) => {
   const messages = await prisma.message.findMany({
     where: {
