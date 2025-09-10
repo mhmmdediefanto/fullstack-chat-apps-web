@@ -132,4 +132,8 @@ export default class ChatService {
 
     return result;
   }
+
+  public static async getConversationId(senderId: number, recipientId: number) {
+    return await getConversationIdPrivate(senderId, recipientId);
+  }
 }

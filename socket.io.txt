@@ -1,0 +1,50 @@
+🔹 Socket.IO (lebih banyak fitur)
+
+Kalau pakai socket.io-client, ada banyak method tambahan:
+
+Method utama
+
+io(url, options) → buat koneksi ke server.
+
+socket.emit(event, data) → kirim event + data ke server.
+
+socket.on(event, callback) → dengarkan event dari server.
+
+socket.off(event, callback?) → hapus listener.
+
+socket.disconnect() → putuskan koneksi.
+
+socket.connect() → nyambung ulang.
+
+Event bawaan Socket.IO
+
+connect → saat koneksi berhasil (socket.id tersedia).
+
+disconnect → saat koneksi terputus.
+
+connect_error → kalau gagal connect.
+
+reconnect / reconnect_attempt / reconnect_error → urusan reconnect otomatis.
+
+Plus
+
+Rooms (socket.join(room), io.to(room).emit(...)) → ini sebenarnya fitur server side, tapi client ikut.
+
+Acknowledgement → socket.emit("event", data, (response) => { ... }) → jadi kayak request/response.
+
+Perbandingan singkat
+Fitur	Native WebSocket	Socket.IO
+Koneksi dasar	✅	✅
+Event custom	❌ (cuma message)	✅ (on/emit event bebas)
+Reconnect otomatis	❌	✅
+Rooms / Namespace	❌	✅
+Acknowledgement (callback response)	❌	✅
+Binary data	✅	✅
+
+👉 Jadi kalau kamu pakai Socket.IO:
+
+emit → kirim event
+
+on → dengar event
+
+disconnect / connect → kontrol koneksi
