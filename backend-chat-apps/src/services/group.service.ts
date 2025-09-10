@@ -1,12 +1,14 @@
 import {
   addMemberToGroup,
   createConversationGroup,
+  deleteGroupById,
   findGroupById,
   findGroupBySlug,
   findGroupBySlugAndCreatedBy,
   findListGroup,
   getGroupMessages,
   isUserInGroup,
+  kickMember,
   sendMessageToGroup,
   updateMemberToAdmin,
 } from "../repository/group.repository";
@@ -64,6 +66,12 @@ export default class GroupService {
     const groupExisting = await findGroupById(groupId);
     if (!groupExisting || groupExisting.type !== "GROUP") {
       throw new Error("Group tidak ditemukan");
+    }
+
+    // cek apakah user sudah ada di group
+    const isMember = await isUserInGroup({ groupId, userId: userId });
+    if (isMember) {
+      throw new Error("User sudah ada di group ini");
     }
 
     // cek apakah yang menambahkan member adalah admin
@@ -228,5 +236,70 @@ export default class GroupService {
 
     const updateUser = await updateMemberToAdmin({ userId, groupId });
     return updateUser;
+  }
+
+  public static async kickMemberofGroup({
+    groupId,
+    userId,
+    authId,
+  }: {
+    groupId: number;
+    userId: number;
+    authId: number;
+  }) {
+    if (userId === authId) {
+      throw new Error("Anda tidak dapat kick diri sendiri");
+    }
+
+    // cek apakah group dengan id tersebut ada
+    const groupExisting = await findGroupById(groupId);
+    if (!groupExisting || groupExisting.type !== "GROUP") {
+      throw new Error("Group tidak ditemukan");
+    }
+
+    // cek apakah user benar ada di group
+    const isMember = await isUserInGroup({ groupId, userId: userId });
+    if (!isMember) {
+      throw new Error("user tidak ada di group ini");
+    }
+
+    // cek apakah yang update adalah user admin
+    const isAdmin = groupExisting.participants.find(
+      (participant) =>
+        participant.userId === authId && participant.role === "ADMIN"
+    );
+    if (!isAdmin) {
+      throw new Error("Hanya admin yang dapat Kick member");
+    }
+
+    const kickUser = await kickMember({ groupId, userId });
+    return kickUser;
+  }
+
+  public static async deleteGroup({
+    groupId,
+    authId,
+  }: {
+    groupId: number;
+    authId: number;
+  }) {
+    // cek apakah group dengan id tersebut ada
+    const groupExisting = await findGroupById(groupId);
+    if (!groupExisting || groupExisting.type !== "GROUP") {
+      throw new Error("Group tidak ditemukan");
+    }
+
+    // cek apakah yang update adalah user admin
+    const isAdmin = groupExisting.participants.find(
+      (participant) =>
+        participant.userId === authId && participant.role === "ADMIN"
+    );
+    if (!isAdmin) {
+      throw new Error("Hanya admin yang dapat delete group");
+    }
+
+    const deleteGroup = await deleteGroupById({ groupId });
+
+    return deleteGroup;
   }
 }

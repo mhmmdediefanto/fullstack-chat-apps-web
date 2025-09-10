@@ -176,3 +176,23 @@ export async function updateMemberToAdmin({
     data: { role: "ADMIN" },
   });
 }
+
+// kik member
+export async function kickMember({
+  groupId,
+  userId,
+}: {
+  groupId: number;
+  userId: number;
+}) {
+  return prisma.conversationParticipant.deleteMany({
+    where: { conversationId: groupId, userId: userId },
+  });
+}
+
+// delete Group
+export async function deleteGroupById({ groupId }: { groupId: number }) {
+  return prisma.conversation.delete({
+    where: { id: groupId },
+  });
+}

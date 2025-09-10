@@ -5,7 +5,6 @@ import {
   createGroupSchema,
   sendMessageGroupSchema,
 } from "../validator/group.validator";
-import { sl } from "zod/locales";
 
 class GroupController {
   async createGroupController(req: any, res: any) {
@@ -106,6 +105,9 @@ class GroupController {
         "Hanya admin yang dapat menambahkan member ke group ini"
       ) {
         return res.status(422).json({ message: error.message });
+      }
+      if (error.message === "User sudah ada di group ini") {
+        return res.status(400).json({ message: error.message });
       }
       return res
         .status(500)
@@ -223,6 +225,81 @@ class GroupController {
       return res.status(statusCode).json({
         message: error.message || "Internal server error",
       });
+    }
+  }
+  async kickMemberofGroupController(req: any, res: any) {
+    try {
+      const validate = addMemberSchema.safeParse({
+        userId: parseInt(req.body.userId),
+        groupId: parseInt(req.body.groupId),
+      });
+
+      console.log(validate);
+
+      if (!validate.success) {
+        const errors = validate.error.issues.map((issue) => ({
+          field: issue.path.join("."),
+          message: issue.message,
+        }));
+        return res.status(400).json({
+          message: "Validation failed",
+          errors,
+        });
+      }
+
+      // cari conversation id dan user id yang mau di kick
+      const { userId, groupId } = validate.data;
+      // ambil id yang login
+      const authId = req.user.id;
+
+      const response = await GroupService.kickMemberofGroup({
+        userId,
+        groupId,
+        authId: authId,
+      });
+
+      return res
+        .status(200)
+        .json({ message: "Success Member Kicked", data: response });
+    } catch (error: any) {
+      if (error.message === "Anda tidak dapat kick diri sendiri") {
+        return res.status(422).json({ message: error.message });
+      }
+
+      if (error.message === "Group tidak ditemukan") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (error.message === "User tidak ada di group ini") {
+        return res.status(422).json({ message: error.message });
+      }
+
+      res.status(500).json({ message: error || "Internal server error" });
+    }
+  }
+
+  async deleteGroupController(req: any, res: any) {
+    try {
+      const authId = req.user.id; // didapat dari authMiddleware
+      if (!authId) {
+        return res.status(400).json({ message: "Unauthorized" });
+      }
+      const groupId = req.body.groupId;
+      if(!groupId) {
+        return res.status(400).json({ message: "Group id is required" });
+      }
+      const result = await GroupService.deleteGroup({ groupId, authId });
+      return res.status(200).json({ message: "Success", data: result });
+    } catch (error: any) {
+      console.log(error)
+      if (error.message === "Group tidak ditemukan") {
+        return res.status(404).json({ message: error.message });
+      }
+      if (error.message === "Hanya admin yang dapat delete group") {
+        return res.status(422).json({ message: error.message });
+      }
+      return res
+        .status(500)
+        .json({ message: error || "Internal server error" });
     }
   }
 }
